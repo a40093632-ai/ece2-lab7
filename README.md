@@ -1,3 +1,125 @@
+# LAB7 — STM32·FPGA SPI 통신
+
+- 과목: 전자전기컴퓨터설계실험Ⅱ
+- 학번 / 이름: 2023440129 / 조성현
+- STM32 보드: NUCLEO-G474RE
+- FPGA 보드: Combo II-DLD S75
+- FPGA Part: xc7s75fgga484-1
+- 실험 범위: STM32_3 과제8~12
+- SPI 조건: Mode 0, 8비트, MSB 우선, SCK 1 MHz 이하
+- 이번 실험은 한 방향씩 전송하며 MISO는 연결하지 않는다.
+
+## 1. 과제별 구성과 증빙
+
+| 과제 | 내용 | 사용하는 소스 | 사전 증빙 |
+|---|---|---|---|
+| 과제8 | MCU 송신 파형 확인 | [MCU 송신 코드](stm32_versions/spi_master/ece2_474_routine.c) | [코드·빌드](evidence/stm32/assignment8/) |
+| 과제9 | MCU → MCU 수신 확인 | [MCU 송신 코드](stm32_versions/spi_master/ece2_474_routine.c), [MCU 수신 코드](stm32_versions/spi_slave/ece2_474_routine.c) | [수신 초기화·코드·빌드](evidence/stm32/assignment9/), 송신 빌드는 과제8 참조 |
+| 과제10 | MCU → FPGA 수신 구현 | MCU 송신 코드, FPGA 수신 Top과 UART | [수신 단독·UART 통합 검증](evidence/fpga/assignment10/) |
+| 과제11 | FPGA → MCU 송신 구현 | FPGA 송신 Top, MCU 수신 코드 | [송신 검증](evidence/fpga/assignment11/), MCU 수신 빌드는 과제9 참조 |
+| 과제12 | FPGA → FPGA 송수신 확인 | 과제11의 FPGA 송신 구성과 과제10의 FPGA 수신 구성 | [연결 검증](evidence/fpga/assignment12/) |
+
+공통 코드·빌드 자료는 한 곳에 보관하고 해당 과제에서 참조한다.
+실제 보드 통신 결과는 과제별로 실험실에서 별도 확인한다.
+
+## 2. STM32 코드 전환 방법
+
+현재 실제 빌드 대상은 `Core/Src/ece2_474_routine.c`이며,
+사전 준비의 마지막 상태는 SPI 슬레이브 수신 코드다.
+
+| 역할 | 보관 파일 | 사용하는 과제 |
+|---|---|---|
+| 마스터 송신 | `stm32_versions/spi_master/ece2_474_routine.c` | 과제8·9·10 |
+| 슬레이브 수신 | `stm32_versions/spi_slave/ece2_474_routine.c` | 과제9·11 |
+
+실행할 역할의 보관 파일을 `Core/Src/ece2_474_routine.c`로 복사한 뒤 저장하고 빌드한다.
+보관 폴더의 파일은 현재 CMake 빌드 목록에 포함되지 않는다.
+실험실에서는 빌드 후 보드에 새 프로그램을 다운로드하고 실행을 재개한다.
+
+송신 코드는 1초마다 기본값 0x55를 전송한다.
+교안에 따라 0x55, 0xA5, 0x00, 0xFF로 값을 바꾸어 파형과 수신 결과를 비교한다.
+송신 함수의 result=0만으로 상대의 수신 성공을 판단하지 않는다.
+
+수신 코드는 PA4를 NSS 입력으로 설정하고, 받은 값을 VCP UART에 출력한다.
+PC Serial Monitor는 9600 baud, 8N1, Text 표시를 사용한다.
+
+## 3. FPGA 설계 파일과 Top
+
+[전체 FPGA 소스](fpga/spi/src/)
+
+| 파일 | 역할 |
+|---|---|
+| `spi_slave_rx.v` | 외부 입력 동기화, SCK 상승 에지 검출, 8비트 수신 |
+| `lab7_spi_rx_uart.v` | SPI 수신값의 LED 반영 및 UART 문자열 출력 |
+| `uart.v` | LAB6 UART 모듈 재사용. 이번 구성은 uart_tx 사용 |
+| `spi_master_tx.v` | 한 바이트의 SPI 송신 파형 생성 |
+| `lab7_spi_master.v` | 1초 간격 송신 요청과 완료 후 LED 갱신 |
+
+| 역할 | Design Top | 필요한 설계 파일 | 적용 XDC |
+|---|---|---|---|
+| 수신 보드 | `lab7_spi_rx_uart` | `lab7_spi_rx_uart.v`, `spi_slave_rx.v`, `uart.v` | [수신 XDC](fpga/spi/constraints/lab7_spi_rx_uart.xdc) |
+| 송신 보드 | `lab7_spi_master` | `lab7_spi_master.v`, `spi_master_tx.v` | [송신 XDC](fpga/spi/constraints/lab7_spi_master.xdc) |
+
+TB는 시뮬레이션 전용이며 보드용 Design Top으로 선택하지 않는다.
+두 XDC는 각각 대응하는 설계에 적용한다.
+
+FPGA 송신 기본값은 0x55이며, 50 MHz 입력에서 SCK는 1 MHz다.
+FPGA 수신 UART는 수신값을 두 자리 대문자 16진수와 CR·LF로 출력한다.
+예를 들어 0xA5 수신 시 Text 화면에는 A5와 줄바꿈이 표시된다.
+UART 출력 구성은 교안의 1초마다 한 바이트 전송을 기준으로 한다.
+
+## 4. 사전 시뮬레이션 검증
+
+[테스트벤치](fpga/spi/sim/)
+
+| TB | 확인 내용 | 결과 |
+|---|---|---|
+| `tb_spi_slave_rx.sv` | 55·A5·00·FF·3C 수신, CS HIGH 중 무시, 미완성 전송 폐기와 재수신 | `LAB7_SPI_SLAVE_RX_PASS checks=5` |
+| `tb_spi_rx_uart.sv` | 4바이트 수신, LED, 16진수 문자열과 CR·LF 총 16문자 | `LAB7_SPI_RX_UART_PASS bytes=4 chars=16` |
+| `tb_spi_master.sv` | 55 송신 3회, 8개 상승 에지, SCK 주기, 반복 간격과 리셋 | `LAB7_SPI_MASTER_PASS frames=3` |
+| `tb_spi_link.sv` | 송수신 Top 연결, SPI 2바이트와 UART 8문자, LED | `LAB7_SPI_LINK_PASS bytes=2 chars=8 UART=9600` |
+
+### TB와 보드 설정의 차이
+
+- SPI 수신 단독 TB: SCK 781.25 kHz.
+- SPI→UART 통합 TB: UART 분주값을 16으로 줄여 검사.
+- SPI 송신 TB: SCK는 1 MHz, 송신 간격은 40 μs로 축소.
+- FPGA 연결 TB: 송신 간격은 6 ms로 축소하며 UART는 기본 9600 baud 사용.
+- FPGA 보드용 송신 Top의 기본 송신 간격은 1초다.
+
+축소된 TB 시간축을 실제 보드의 1초 간격으로 해석하지 않는다.
+PASS는 각 TB가 검사한 디지털 동작 범위의 결과다.
+
+
+## 5. 사전 검증 범위와 실험실 확인 항목
+
+사전 검증은 STM32 빌드, FPGA RTL 시뮬레이션, 소스와 XDC 포트 대조까지다.
+실제 보드 통신과 Vivado 구현 결과는 아직 확인하지 않았다.
+
+실험실에서 다음을 확인한다.
+
+- 과제8: MCU 송신의 SCK·MOSI·CS, 비트 순서와 주파수
+- 과제9: MCU 수신 VCP UART 결과와 송수신 역할 교대
+- 과제10: MCU 송신값과 FPGA UART 출력의 일치
+- 과제11: FPGA 송신 파형과 MCU 수신 VCP UART 결과의 일치
+- 과제12: 수신 FPGA UART 결과와 송수신 역할 교대
+- 정확한 Part·Design Top·XDC, 합성·구현·DRC·타이밍 결과
+- 실제 사용한 bitstream, 보드 다운로드·시연 자료와 SHA-256
+
+실제 bitstream 생성·보드 다운로드는 실험실에서 진행하며,
+사용한 bitstream과 보드 결과는 사후 자료로 정리한다.
+
+## 6. 제공 코드와 작성 범위
+
+- STM32 기본 프로젝트와 예제: 조교 제공 ece2_474 v1.1.0 기준.
+- STM32 실습 코드는 docs/STM32_3.md의 송신·수신 예제를 적용했다.
+- 기본 초기화·핀 정의·표준 입출력 연결 코드는 유지했다.
+- FPGA SPI 송신·수신 RTL, 연결 Top, TB와 XDC는 LAB7용으로 작성했다.
+- UART 모듈은 LAB6에서 사용한 uart.v를 재사용했다.
+- 제출 기준 태그·커밋과 보고서 링크는 사전 자료 정리 후 추가한다.
+
+---
+
 # STM32 기초 실습
 
 **실습 보드: NUCLEO-G474RE**
