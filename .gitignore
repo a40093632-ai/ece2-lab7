@@ -14,3 +14,6 @@ mx.scratch
 *.fls
 *.fdb_latexmk
 *.xdv
+# FPGA simulation outputs
+*.vvp
+*.vcd
