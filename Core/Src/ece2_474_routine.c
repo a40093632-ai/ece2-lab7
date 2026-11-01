@@ -7,6 +7,8 @@
  */
 #include "ece2_474.h"
 #include "main.h"
+#define SPI_NSS_RX_ece2_Pin       GPIO_PIN_4
+#define SPI_NSS_RX_ece2_GPIO_Port GPIOA
 /* 주변장치 변수의 extern 선언은 ece2_474.h에 있습니다. */
 
 /* UART 인터럽트 수신 실습 때 필요한 버퍼의 주석을 해제합니다.
@@ -18,58 +20,45 @@
 /* 주변장치 초기화가 끝난 뒤, 메인 루프에 들어가기 전에 한 번 호출됩니다. */
 void ece2_474_init(void)
 {
-    /* 필요한 기능만 주석을 해제합니다. 기본 핀·통신 설정은 이미 끝난 상태입니다.
-     * VS Code에서 해당 줄에 커서를 놓거나 여러 줄을 선택하고 Ctrl + /를 누르면
-     * 줄 주석(//)을 해제하거나 다시 설정할 수 있습니다.
-     */
+    if (HAL_SPI_DeInit(&hspi1) != HAL_OK)
+        Error_Handler();
 
-    /* TIM6: 100 ms마다 tim6_isr_p4()를 호출합니다. */
-    // HAL_TIM_Base_Start_IT(&htim6);
+    hspi1.Init.Mode = SPI_MODE_SLAVE;
+    hspi1.Init.NSS = SPI_NSS_HARD_INPUT;
 
-    /* TIM3: PB4에서 1 kHz PWM을 출력합니다. 비교값 500은 50%입니다. */
-    // HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
-    // __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 500U);
+    if (HAL_SPI_Init(&hspi1) != HAL_OK)
+        Error_Handler();
 
-    /* UART2: PC에서 한 바이트를 받으면 uart2_isr_p6()를 호출합니다.
-     * 위의 uart2_rx_ece2 버퍼도 주석을 해제해야 합니다.
-     * 수신 완료 함수에서 HAL_UART_Receive_IT를 다시 호출해야 다음 입력도 받습니다.
-     * getchar·fgets·scanf로 같은 UART를 읽는 방식과 함께 사용하지 않습니다.
-     */
-    // HAL_UART_Receive_IT(&huart2, &uart2_rx_ece2, 1U);
+    GPIO_InitTypeDef gpio = {0};
+    gpio.Pin = SPI_NSS_RX_ece2_Pin;
+    gpio.Mode = GPIO_MODE_AF_PP;
+    gpio.Pull = GPIO_PULLUP;
+    gpio.Speed = GPIO_SPEED_FREQ_LOW;
+    gpio.Alternate = GPIO_AF5_SPI1;
 
-    /* UART3: FPGA에서 한 바이트를 받으면 uart3_isr_p5()를 호출합니다.
-     * 위의 uart3_rx_ece2 버퍼도 주석을 해제해야 합니다.
-     * UART는 한 번 수신한 뒤, 수신 완료 함수에서 다시 수신을 요청합니다.
-     */
-    // HAL_UART_Receive_IT(&huart3, &uart3_rx_ece2, 1U);
-
-    /* GPIO 입력 인터럽트는 이미 켜져 있어 별도 시작 호출이 필요 없습니다.
-     * SPI·I2C와 UART 송신도 별도 시작 없이 필요한 시점에 송수신 함수를 호출합니다.
-     */
+    HAL_GPIO_Init(SPI_NSS_RX_ece2_GPIO_Port, &gpio);
 }
 
 /* 메인 루프에서 반복해서 호출됩니다. */
 void polling_routine(void)
 {
-    static uint32_t last_ms = 0;
-    uint32_t now_ms = HAL_GetTick();
-
-    if (now_ms - last_ms < 1000U) return;
-    last_ms = now_ms;
-
-    uint8_t tx = 0x55;
-
-    HAL_GPIO_WritePin(SPI_CS_ece2_GPIO_Port,
-                      SPI_CS_ece2_Pin, GPIO_PIN_RESET);
+    uint8_t rx = 0;
 
     HAL_StatusTypeDef result =
-        HAL_SPI_Transmit(&hspi1, &tx, 1U, 100U);
+        HAL_SPI_Receive(&hspi1, &rx, 1U, 2000U);
 
-    HAL_GPIO_WritePin(SPI_CS_ece2_GPIO_Port,
-                      SPI_CS_ece2_Pin, GPIO_PIN_SET);
-
-    printf("TX=%02X, result=%d\r\n",
-           (unsigned int)tx, (int)result);
+    if (result == HAL_OK)
+    {
+        printf("RX=%02X\r\n", (unsigned int)rx);
+    }
+    else if (result == HAL_TIMEOUT)
+    {
+        printf("RX timeout: check sender, SCK, MOSI, CS and GND\r\n");
+    }
+    else
+    {
+        printf("RX error=%d\r\n", (int)result);
+    }
 }
 
 /* 1. 사용자 버튼 PC13을 눌렀을 때 호출됩니다. 우선순위: 7.
