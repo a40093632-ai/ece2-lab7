@@ -14,10 +14,10 @@
 | 과제 | 내용 | 사용하는 소스 | 사전 증빙 |
 |---|---|---|---|
 | 과제8 | MCU 송신 파형 확인 | [MCU 송신 코드](stm32_versions/spi_master/ece2_474_routine.c) | [코드·빌드](evidence/stm32/assignment8/) |
-| 과제9 | MCU → MCU 수신 확인 | [MCU 송신 코드](stm32_versions/spi_master/ece2_474_routine.c), [MCU 수신 코드](stm32_versions/spi_slave/ece2_474_routine.c) | [수신 초기화·코드·빌드](evidence/stm32/assignment9/), 송신 빌드는 과제8 참조 |
-| 과제10 | MCU → FPGA 수신 구현 | MCU 송신 코드, FPGA 수신 Top과 UART | [수신 단독·UART 통합 검증](evidence/fpga/assignment10/) |
-| 과제11 | FPGA → MCU 송신 구현 | FPGA 송신 Top, MCU 수신 코드 | [송신 검증](evidence/fpga/assignment11/), MCU 수신 빌드는 과제9 참조 |
-| 과제12 | FPGA → FPGA 송수신 확인 | 과제11의 FPGA 송신 구성과 과제10의 FPGA 수신 구성 | [연결 검증](evidence/fpga/assignment12/) |
+| 과제9 | MCU → MCU 수신 확인 | [MCU 송신 코드](stm32_versions/spi_master/ece2_474_routine.c), [MCU 수신 코드](stm32_versions/spi_slave/ece2_474_routine.c) | [수신 초기화·코드·빌드](evidence/stm32/assignment9/), [공통 송신 빌드](evidence/stm32/assignment8/) |
+| 과제10 | MCU → FPGA 수신 구현 | [MCU 송신 코드](stm32_versions/spi_master/ece2_474_routine.c), [FPGA 수신 Top](fpga/spi/src/lab7_spi_rx_uart.v), [SPI 수신 모듈](fpga/spi/src/spi_slave_rx.v), [UART 모듈](fpga/spi/src/uart.v) | [수신 단독·UART 통합 검증](evidence/fpga/assignment10/), [공통 MCU 송신 빌드](evidence/stm32/assignment8/) |
+| 과제11 | FPGA → MCU 송신 구현 | [FPGA 송신 Top](fpga/spi/src/lab7_spi_master.v), [SPI 송신 모듈](fpga/spi/src/spi_master_tx.v), [MCU 수신 코드](stm32_versions/spi_slave/ece2_474_routine.c) | [송신 검증](evidence/fpga/assignment11/), [공통 MCU 수신 빌드](evidence/stm32/assignment9/) |
+| 과제12 | FPGA → FPGA 송수신 확인 | [FPGA 송신 Top](fpga/spi/src/lab7_spi_master.v), [SPI 송신 모듈](fpga/spi/src/spi_master_tx.v), [FPGA 수신 Top](fpga/spi/src/lab7_spi_rx_uart.v), [SPI 수신 모듈](fpga/spi/src/spi_slave_rx.v), [UART 모듈](fpga/spi/src/uart.v) | [연결 검증](evidence/fpga/assignment12/), [공통 송신 검증](evidence/fpga/assignment11/), [공통 수신 검증](evidence/fpga/assignment10/) |
 
 공통 코드·빌드 자료는 한 곳에 보관하고 해당 과제에서 참조한다.
 실제 보드 통신 결과는 과제별로 실험실에서 별도 확인한다.
