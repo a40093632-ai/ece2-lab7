@@ -116,7 +116,11 @@ PASS는 각 TB가 검사한 디지털 동작 범위의 결과다.
 - 기본 초기화·핀 정의·표준 입출력 연결 코드는 유지했다.
 - FPGA SPI 송신·수신 RTL, 연결 Top, TB와 XDC는 LAB7용으로 작성했다.
 - UART 모듈은 LAB6에서 사용한 uart.v를 재사용했다.
-- 제출 기준 태그·커밋과 보고서 링크는 사전 자료 정리 후 추가한다.
+
+## 실험 전 후 보고서
+
+- [LAB7 실험 전 보고서 PDF](reports/pre/LAB7_실험전보고서_2023440129_조성현.pdf)
+- [소스·증빙 기준 태그: lab7-pre-v2](https://github.com/a40093632-ai/ece2-lab7/tree/lab7-pre-v2)
 
 ---
 
