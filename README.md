@@ -120,6 +120,8 @@ PASS는 각 TB가 검사한 디지털 동작 범위의 결과다.
 
 - [LAB7 실험 전 보고서 PDF](reports/pre/LAB7_실험전보고서_2023440129_조성현.pdf)
 - [소스·증빙 기준 태그: lab7-pre-v2](https://github.com/a40093632-ai/ece2-lab7/tree/lab7-pre-v2)
+- [LAB7 실험 후 보고서 PDF](reports/post/LAB7_실험후보고서_2023440129_조성현.pdf)
+- [실험 후 소스·증빙 기준 태그: lab7-post-v1](https://github.com/a40093632-ai/ece2-lab7/tree/lab7-post-v1)
 
 ---
 
