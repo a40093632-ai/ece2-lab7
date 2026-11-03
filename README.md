@@ -90,24 +90,23 @@ UART 출력 구성은 교안의 1초마다 한 바이트 전송을 기준으로 
 축소된 TB 시간축을 실제 보드의 1초 간격으로 해석하지 않는다.
 PASS는 각 TB가 검사한 디지털 동작 범위의 결과다.
 
+## 5. 실험 후 증빙 자료
 
-## 5. 사전 검증 범위와 실험실 확인 항목
+현장 실험은 조원 코드로 진행했으며, 아래 Vivado 자료와 비트스트림은 개인 소스로 생성한 결과다.
 
-사전 검증은 STM32 빌드, FPGA RTL 시뮬레이션, 소스와 XDC 포트 대조까지다.
-실제 보드 통신과 Vivado 구현 결과는 아직 확인하지 않았다.
+| 과제 | 보드·실측 사진 | 시연영상 | Vivado 결과 |
+|---|---|---|---|
+| 과제8 · MCU 송신 | [오실로스코프·송신 출력](evidence/stm32/assignment8/board/photos/) | — | — |
+| 과제9 · MCU → MCU | [수신 출력](evidence/stm32/assignment9/board/photos/) | [영상](evidence/stm32/assignment9/board/videos/) | — |
+| 과제10 · MCU → FPGA | [보드·수신 출력](evidence/fpga/assignment10/board/photos/) | — | [수신 설계](evidence/fpga/assignment10/vivado/) |
+| 과제11 · FPGA → MCU | [보드·수신 출력](evidence/fpga/assignment11/board/photos/) | — | [송신 설계](evidence/fpga/assignment11/vivado/) |
+| 과제12 · FPGA → FPGA | [송수신 보드·수신 출력](evidence/fpga/assignment12/board/photos/) | [영상](evidence/fpga/assignment12/board/videos/) | 과제10·11의 두 설계 재사용 |
 
-실험실에서 다음을 확인한다.
+### 개인 소스로 생성한 비트스트림
 
-- 과제8: MCU 송신의 SCK·MOSI·CS, 비트 순서와 주파수
-- 과제9: MCU 수신 VCP UART 결과와 송수신 역할 교대
-- 과제10: MCU 송신값과 FPGA UART 출력의 일치
-- 과제11: FPGA 송신 파형과 MCU 수신 VCP UART 결과의 일치
-- 과제12: 수신 FPGA UART 결과와 송수신 역할 교대
-- 정확한 Part·Design Top·XDC, 합성·구현·DRC·타이밍 결과
-- 실제 사용한 bitstream, 보드 다운로드·시연 자료와 SHA-256
-
-실제 bitstream 생성·보드 다운로드는 실험실에서 진행하며,
-사용한 bitstream과 보드 결과는 사후 자료로 정리한다.
+- [FPGA 수신 비트스트림](artifacts/bit/lab7_spi_rx_uart.bit): 과제10·12 수신 설계
+- [FPGA 송신 비트스트림](artifacts/bit/lab7_spi_master.bit): 과제11·12 송신 설계
+- SHA-256 확인 사진은 각 설계의 Vivado 증빙 폴더에 포함했다.
 
 ## 6. 제공 코드와 작성 범위
 
